@@ -11,6 +11,12 @@ import matplotlib.pyplot as plt
 from skimage import color
 from skimage.filters import gaussian, threshold_otsu
 from skimage.draw import polygon
+import time
+import psutil
+
+process = psutil.Process(os.getpid())
+
+start_time = time.time()
 
 # Function to load images from a folder
 def load_images_from_folder(folder):
@@ -117,14 +123,19 @@ def segment_using_lab(image):
     
 def apply_watershed_simple(image, filename, output_folder):
     # Convert the PIL image to a NumPy array for OpenCV processing
-    #image_np = np.array(image)
     en_np_array = np.array(image)
+    
     #Check if the image is already grayscale (1 channel)
-    if len(en_np_array.shape) == 2: #The image is already grayscale
-        gray = en_np_array #No need to convert
-    else:
-        #Convert to grayscale if the image is color (3 channels)
-        gray = cv2.cvtColor(en_np_array, cv2.COLOR_BGR2GRAY)
+    if len(en_np_array.shape) == 3 and en_np_array.shape[2] == 4:  # RGBA image
+        print(f"Converting RGBA to BGR for image: {filename}")
+        en_np_array = cv2.cvtColor(en_np_array, cv2.COLOR_RGBA2BGR)
+    elif len(en_np_array.shape) == 2:  # Grayscale image (1 channel)
+        print(f"Converting grayscale to BGR for image: {filename}")
+        en_np_array = cv2.cvtColor(en_np_array, cv2.COLOR_GRAY2BGR)
+    elif len(en_np_array.shape) == 3 and en_np_array.shape[2] != 3:  # Check if not 3 channels (BGR)
+        print(f"Converting to 3-channel BGR for image: {filename}")
+        en_np_array = cv2.cvtColor(en_np_array, cv2.COLOR_GRAY2BGR)
+
     # Enhance contrast
     image_pil = Image.fromarray(en_np_array)
     enhancer = ImageEnhance.Contrast(image_pil)
@@ -180,13 +191,23 @@ def apply_watershed_simple(image, filename, output_folder):
 
 # Function to enhance contrast
 def enhance_contrast(image, factor=1.5):
-	enhancer = ImageEnhance.Contrast(image)
-	return enhancer.enhance(2.0)  # Increase contrast by a factor of 2
+    # Ensure the image is in RGB mode before enhancing contrast
+    if image.mode != 'RGB':
+        if image.mode == 'RGBA':
+            image = image.convert('RGB')  # Convert RGBA to RGB
+        else:
+            image = image.convert('RGB')  # Convert any other mode to RGB
+    enhancer = ImageEnhance.Contrast(image)
+    return enhancer.enhance(2.0)  # Increase contrast by a factor of 2
 	    
 # Function to sharpen the image
 def sharpen_image(image, factor=2.0):
-	enhancer = ImageEnhance.Sharpness(image)
-	return enhancer.enhance(factor)
+	# Ensure the image is in RGB mode before applying sharpness
+    if image.mode != 'RGB':
+        image = image.convert('RGB')  # Convert to RGB if not already in that mode
+    #Enhance sharpness
+    enhancer = ImageEnhance.Sharpness(image)
+    return enhancer.enhance(factor)
 	
 # Function to apply Gaussian filter
 def apply_gaussian_filter(image):
@@ -266,6 +287,9 @@ def shear_translate_image(image):
 # Function to remove noise from an image using Non-Local Means Denoising
 def remove_noise(image):
     np_image = np.array(image)
+    if len(np_image.shape) == 2: #If the image ir already in grayscale
+        np_image = cv2.cvtColor(np_image, cv2.COLOR_GRAY2BGR) #Convert to grayscale if the image has 3 channels (rgb)
+
     blurred = cv2.fastNlMeansDenoisingColored(np_image, None, h=10, templateWindowSize=7, searchWindowSize=21)
     return Image.fromarray(blurred)
 
@@ -510,3 +534,15 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+# Coletar dados do processo após execução
+cpu_usage = process.cpu_percent(interval=1)  # Uso de CPU para o processo
+memory_usage = process.memory_info().rss / (1024 * 1024)  # Uso de RAM em MB
+
+# Tempo total de execução
+end_time = time.time()
+exec_time = end_time - start_time
+
+print(f"Tempo de execução: {exec_time} segundos")
+print(f"Uso de CPU (processo): {cpu_usage}%")
+print(f"Uso de RAM (processo): {memory_usage} MB")
