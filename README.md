@@ -2,7 +2,7 @@
 Image Processing System for Melanoma Diagnosis
 
 ## Introduction
-This Python program processes a batch of images by applying a variety of transformations and enhancements. It can perform resizing, color conversion, augmentation (such as rotation and flipping), noise reduction, filtering, and more advanced image processing techniques like applying Gabor and Gaussian filters. This program is ideal for preparing images for machine learning applications or for performing general image preprocessing tasks.
+This Python program was designed to perform transformations and improvements on a batch of images, initially for melanoma, but later other applications were explored, such as retina, X-rays, MRIs, and ultrasounds. It is ideal for melanoma and may require fine adjustments for other examples depending on the specific image customization needs. It can perform resizing, color conversion, augmentation (such as rotation and flipping), noise reduction, filtering, and more advanced image processing techniques like applying Gabor and Gaussian filters. This program is ideal for preparing images for machine learning applications or for performing general image preprocessing tasks.
 
 ## Installation and Dependencies
 This script requires Python 3.x and several Python libraries for image processing. You can install these dependencies with the following command:
